@@ -1,0 +1,1972 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔王城冒險 - 進階版</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            background-color: #333;
+            border: 2px solid #666;
+            border-radius: 5px;
+            position: relative;
+        }
+        #enemySection {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        #enemyHpBarContainer {
+            width: 70%;
+            height: 20px;
+            background-color: #555;
+            border: 1px solid #777;
+            position: relative;
+        }
+        #enemyHpBar {
+            height: 100%;
+            background-color: #ff4500;
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+        #enemyHpText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 12px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #enemyImage {
+            width: 80px;
+            height: 65px;
+            background-color: #444;
+            margin-left: 10px;
+            border: 0.5px solid #ccc;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        #enemyImage img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #output {
+            height: 350px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #222;
+            border: 1px solid #444;
+        }
+        #output p {
+            margin: 0;
+            padding: 5px 0;
+            /* 移除初始 opacity: 0，改由 JavaScript 控制 */
+        }
+        #playerPanel {
+            padding: 10px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        #playerSection {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        #playerImage {
+            width: 80px;
+            height: 65px;
+            margin-right: 10px;
+            border: 0.5px solid #ccc;
+            overflow: hidden;
+        }
+        #playerImage img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #playerHpBarContainer {
+            width: 70%;
+            height: 20px;
+            background-color: #555;
+            border: 1px solid #777;
+            position: relative;
+        }
+        #playerHpBar {
+            height: 100%;
+            background-color: #ff0000;
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+        #playerHpText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 12px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        #stats {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+        }
+        .stat-row p {
+            margin: 0;
+            font-size: 14px;
+        }
+        #playerPanel details summary {
+            color: #ffd700; /* 詳細資訊文字設為黃色 */
+        }
+        #playerActionsRow {
+            text-align: center; /* 置中顯示 */
+            margin-top: 10px;
+        }
+        #playerActionsLeft {
+            font-weight: bold; /* 數字加粗 */
+            color: #ff7300; /* 數字設為綠色 */
+        }
+        #startButton {
+    padding: 8px 15px;
+    font-size: 20px;
+    background-color: transparent;
+    color: #fff;
+    border: 0.5px solid #fff;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    animation: pulse 1.5s infinite ease-in-out;
+    margin-top: 20px; /* 添加上外邊距 */
+}
+
+#startButton:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+#startButton:active {
+    animation: buttonPress 0.3s ease;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes buttonPress {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes shakeRight {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(5px, 0); }
+            50% { transform: translate(-5px, 0); }
+            75% { transform: translate(2px, 0); }
+            100% { transform: translate(0, 0); }
+        }
+        @keyframes shakeLeft {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(-5px, 0); }
+            50% { transform: translate(5px, 0); }
+            75% { transform: translate(-2px, 0); }
+            100% { transform: translate(0, 0); }
+        }
+        @keyframes shakeUp {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(0, -5px); }
+            100% { transform: translate(0, 0); }
+        }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { opacity: 1; transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); } /* 確保結束時 opacity: 1 */
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .fade-out {
+            animation: fadeOut 0.5s forwards;
+        }
+        .shake-right {
+            animation: shakeRight 0.3s;
+        }
+        .shake-left {
+            animation: shakeLeft 0.3s;
+        }
+        .shake-up {
+            animation: shakeUp 0.5s infinite;
+        }
+        .bounce-in {
+            animation: bounceIn 0.5s forwards;
+        }
+        .flash {
+            animation: flash 0.5s;
+        }
+        button {
+            padding: 10px;
+            margin: 5px;
+            background-color: #555;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: Arial, "Segoe UI", sans-serif; /* 添加支援 Unicode 的字體 */
+        }
+        
+        button:hover {
+            background-color: #777;
+        }
+        
+        button:active {
+            animation: buttonPress 0.3s ease;
+        }
+        button:active {
+            animation: buttonPress 0.3s ease;
+        }
+        /* 特殊行動按鈕樣式 */
+.special-action-button {
+    color: #ffee00; /* 將文字顏色設為紅色，可自行更改 */
+}
+
+/* 特殊行動內部的 span 樣式保持不變 */
+.special-action-button .special-action {
+    color: #ffee00; /* 確保內部 span 與按鈕一致 */
+}
+        .enemy-name {
+            color: inherit;
+            user-select: none;
+        }
+        #infoBox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(3, 5, 44, 0.733);
+            color: #fff;
+            padding: 15px; /* 縮減內距以適應手機 */
+            border: 0.5px solid #ccc;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            text-align: left;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+            max-width: 95vw; /* 適配手機寬度 */
+            min-width: 320px;
+            max-height: 90vh; /* 限制高度 */
+            overflow-y: auto;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        #infoBox.visible {
+            opacity: 1;
+        }
+        
+        #infoBox img {
+            width: 300px;
+            height: 240px;
+            object-fit: cover;
+            border: 0.5px solid #ccc;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        #infoBox strong {
+            font-size: 16px;
+            color: #ffd700;
+            display: block;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        /* 並排顯示主要資訊 */
+        #infoBox .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 兩欄並排 */
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        #infoBox .stats-grid span {
+            font-size: 12px;
+        }
+        
+        /* 收合樣式 */
+        #infoBox details {
+            margin-top: 10px;
+        }
+        
+        #infoBox details summary {
+            cursor: pointer;
+            color: #ffd700;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        #infoBox details p {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        /* 故事部分 */
+#infoBox .story {
+    margin-top: 15px;
+    font-size: 13px;
+    line-height: 1.6; /* 增加行距 */
+}
+
+/* 分段落空行 */
+#infoBox .story p {
+    margin: 10px 0; /* 段落間距 */
+}
+    </style>
+</head>
+<body>
+    <div id="titleScreen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; background-color: #1a1a1a;">
+        <img src="https://www.independent.com.tw/wp-content/uploads/2025/02/abyssR2.png" alt="Title" style="max-width: 100%; max-height: 80%; object-fit: contain;">
+        <button id="startButton">𝕊𝕋𝔸ℝ𝕋</button>
+    </div>
+
+    <div id="gameContent" style="display: none;">
+        <div id="gameContainer">
+            <div id="enemySection">
+                <div id="enemyHpBarContainer">
+                    <div id="enemyHpBar"></div>
+                    <div id="enemyHpText"></div>
+                </div>
+                <div id="enemyImage"></div>
+            </div>
+            <div id="output"></div>
+            <div id="choices"></div>
+            <div id="playerPanel">
+                <!-- 玩家面板內容保持不變 -->
+                <div id="playerSection">
+                    <div id="playerImage">
+                        <img src="https://www.independent.com.tw/wp-content/uploads/2025/02/knight1.png" alt="Player">
+                    </div>
+                    <div id="playerHpBarContainer">
+                        <div id="playerHpBar"></div>
+                        <div id="playerHpText"></div>
+                    </div>
+                </div>
+                <div id="stats">
+                    <div class="stat-row">
+                        <p>攻擊: <span id="playerAttack">${player.attack}</span></p>
+                        <p>防禦: <span id="playerDefense">${player.defense}</span></p>
+                    </div>
+                    <div class="stat-row">
+                        <p>等級: <span id="playerLevel">${player.level}</span> (經驗: <span id="playerExp">${player.exp}</span>/<span id="playerExpToNext">${player.expToNextLevel}</span>)</p>
+                        <p>金幣: <span id="playerGold">${player.gold}</span></p>
+                    </div>
+                </div>
+                <details>
+                    <summary>詳細資訊</summary>
+                    <p>HP: <span id="playerHpDetail">${player.hp}/${player.maxHp}</span></p>
+                    <p>爆擊率: <span id="playerCritChance">${(player.critChance * 100).toFixed(0)}%</span></p>
+                    <p>迴避率: <span id="playerDodgeChance">${(player.dodgeChance * 100).toFixed(0)}%</span></p>
+                    <p>魔法: <span id="playerMagic">${player.magic.length > 0 ? player.magic.join(', ') : '無'}</span></p>
+                    <p>道具: <span id="playerItems">${player.items.length > 0 ? player.items.join(', ') : '無'}</span></p>
+                    <p>強化: <span id="playerEnhancements">${player.enhancements.length > 0 ? player.enhancements.join(', ') : '無'}</span></p>
+                    <p>裝備: <span id="playerEquipment">${player.equipment.length > 0 ? player.equipment.join(', ') : '無'}</span></p>
+                    <p>狀態: <span id="playerStatus">${player.status.length > 0 ? player.status.map(s => `<span class="${s === '祝福' ? 'status-positive' : 'status-negative'}">${s}</span>`).join(', ') : '正常'}</span></p>
+                    <p>免疫: <span id="playerImmunities">${player.immunities.length > 0 ? player.immunities.join(', ') : '無'}</span></p>
+                </details>
+                <p id="playerActionsRow">剩餘行動次數: <span id="playerActionsLeft">${actionsLeft}</span></p>
+            </div>
+            <div id="infoBox"></div> <!-- 新增 #infoBox -->
+        </div>
+    </div>
+</body>
+
+    <script>
+        const titleScreen = document.getElementById('titleScreen');
+        const gameContent = document.getElementById('gameContent');
+        const startButton = document.getElementById('startButton');
+        const output = document.getElementById('output');
+        const choices = document.getElementById('choices');
+        const playerHpBar = document.getElementById('playerHpBar');
+        const playerHpText = document.getElementById('playerHpText');
+        const enemyHpBar = document.getElementById('enemyHpBar');
+        const enemyHpText = document.getElementById('enemyHpText');
+        const playerPanel = document.getElementById('playerPanel');
+        const gameContainer = document.getElementById('gameContainer');
+        const infoBox = document.getElementById('infoBox');
+        const enemyImage = document.getElementById('enemyImage');
+        const playerImage = document.getElementById('playerImage');
+
+        // 定義全局背景音樂變數
+        let backgroundMusic = null;
+
+        // 修改玩家初始資料，新增名稱、故事和圖片
+        let player = {
+            name: '無名騎士',
+            hp: 50,
+            maxHp: 50,
+            attack: 10,
+            defense: 5,
+            level: 1,
+            exp: 0,
+            expToNextLevel: 50,
+            gold: 0,
+            critChance: 0.2,
+            dodgeChance: 0,
+            magic: [],
+            items: [],
+            enhancements: [],
+            equipment: [],
+            inventory: [],
+            status: [],
+            immunities: [],
+            sealedAction: null,
+            iceMagicUses: 0,
+            iceMagicCooldown: 0,
+            tempStats: { attack: 0, defense: 0, hp: 0 },
+            eventDesc: '你是一名拋棄自己名字的騎士，曾經守護王國邊境，無數戰役中磨礪出的意志如鋼鐵般堅韌。然而，魔王的崛起摧毀了你的家園，親友的鮮血染紅了你的盔甲。如今，你帶著復仇的火焰，孤身踏入魔王城，誓要將黑暗連根拔起，尋找救贖與榮耀。', // 原始描述
+            story: '在王國邊境的風霜中，你曾是無人不知的守護者，手持長劍守望著和平的歲月。每當夜幕降臨，村落的燈火是你心中的慰藉。然而，那個血腥的夜晚，魔王的軍團如潮水般湧來，火焰吞噬了你的故鄉，親人的哭喊在耳邊回響。你跪在廢墟中，握緊斷裂的劍刃，立下誓言：不惜一切代價，也要讓魔王付出血債。如今，孤身一人的你踏入這片詛咒之地，盔甲上的每一道傷痕，都是你不屈的證明。', // 更深入的背景故事
+            image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/knight1.png'
+        };
+
+        let currentFloor = 1;
+        let enemy = null;
+        let gameState = 'start';
+        let defending = false;
+        let statusTurns = {};
+        let actionsLeft = 3;
+        let exploreCount = 0;
+        let bossDefeatedCount = 0;
+        let baseStats = { attack: player.attack, defense: player.defense, hp: player.hp };
+
+        const enemyColors = {
+            '骷髏兵': '#00ffff',
+            '哥布林': '#00ff00',
+            '黑暗狼': '#ff00ff',
+            '魔像': '#ffa500',
+            '吸血蝙蝠': '#ff0000',
+            '魔王': '#ff69b4',
+            '幽靈': '#a9a9a9',
+            '火焰元素': '#ff4500',
+            '冰霜巨人': '#00b7eb',
+            '毒蛇': '#9acd32'
+        };
+
+        const enemies = [
+    { 
+        name: '骷髏兵', 
+        hp: 20, 
+        attack: 8, 
+        defense: 3, 
+        special: 'bleed', 
+        specialDesc: '流血', // 中文翻譯
+        eventDesc: '一具披著破爛盔甲的骷髏，空洞的眼眶閃著幽綠光芒，手中的生鏽長劍散發著死亡氣息。', // 原始描述
+        story: '這些骷髏兵曾是王國的忠誠衛士，在魔王入侵時誓死守護城牆。然而，戰敗後它們被邪惡的魔法復活，靈魂被禁錮在腐朽的骨骸中。如今，它們漫無目的游蕩在魔王城內，眼中幽綠的火焰是對昔日榮耀的扭曲回憶，手中的長劍雖已生鏽，卻仍帶著無盡的怨念。', // 更深入的故事
+        exp: 10, 
+        gold: 5, 
+        image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/skeleton.png' 
+    },
+    { 
+        name: '哥布林', 
+        hp: 25, 
+        attack: 10, 
+        defense: 2, 
+        special: null, 
+        specialDesc: '無', 
+        eventDesc: '一隻矮小醜陋的哥布林，綠色的皮膚滿是疣狀突起，手中握著彎曲的匕首，發出刺耳的笑聲。', 
+        story: '哥布林族群世代居住在魔王城周圍的陰暗洞穴中，靠掠奪與偷竊為生。它們的祖先曾是森林中的精靈，因觸怒古代魔神而被詛咒，變成這副醜陋模樣。如今，它們成為魔王的爪牙，用尖銳的匕首和狡詐的笑聲，為自己的生存掙扎。', 
+        exp: 15, 
+        gold: 8, 
+        image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/goblin.png' 
+    },
+    { 
+        name: '黑暗狼', 
+        hp: 30, 
+        attack: 12, 
+        defense: 4, 
+        special: 'poison', 
+        specialDesc: '中毒', 
+        eventDesc: '一頭毛色如墨的黑狼，尖牙滴著毒液，血紅的雙眼在黑暗中閃爍，發出低沉的咆哮。', 
+        story: '黑暗狼曾是森林深處的聖獸，守護著自然的平衡。然而，魔王的黑暗力量滲透大地，將它們扭曲成兇殘的怪物。它們的毒液來自被污染的血液，紅眼中的怒火是對失去家園的無聲控訴。如今，它們在魔王城中獵殺一切活物，成為黑暗的忠實僕人。', 
+        exp: 20, 
+        gold: 10, 
+        image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/darkwolf.png' 
+    },
+    { 
+        name: '魔像', 
+        hp: 40, 
+        attack: 15, 
+        defense: 8, 
+        special: 'stun', 
+        specialDesc: '暈眩', 
+        eventDesc: '一座由剛硬的輝石雕成的巨型魔像，關節間冒著魔性的光芒，每一步都震得地面顫抖。', 
+        story: '魔像是古代魔法師的傑作，用輝石與魔力打造，旨在守護聖殿免受入侵。然而，魔王奪取了這些傑作的控制權，將它們變成無情的戰爭機器。它們的每一次步伐都帶著昔日創造者的遺憾，如今只為毀滅而存在，沉默卻致命。', 
+        exp: 25, 
+        gold: 15, 
+        image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/golem.png' 
+    },
+    { 
+        name: '吸血蝙蝠', 
+        hp: 25, 
+        attack: 10, 
+        defense: 3, 
+        special: 'leech', 
+        specialDesc: '吸血', 
+        eventDesc: '一隻巨大的蝙蝠，翅膀如破舊斗篷，猩紅的雙眼透著貪婪，尖銳的獠牙渴求著鮮血。', 
+        story: '這些吸血蝙蝠誕生於魔王城地下的血池，牠們的祖先曾是普通的夜行生物，因長期吸食被詛咒的血液而變異。它們的猩紅雙眼能感知生命氣息，巨大的翅膀在黑暗中無聲滑翔，每一次獵食都是對鮮血的無盡渴望。', 
+        exp: 18, 
+        gold: 12, 
+        image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/vampirebat.png' 
+    },
+    { 
+        name: '幽靈', 
+        hp: 20, 
+        attack: 9, 
+        defense: 2, 
+        special: 'curse', 
+        specialDesc: '詛咒', 
+        eventDesc: '一個半透明的靈體，發出淒厲的低語，身邊環繞著詭異的寒氣。', 
+        story: '幽靈是那些在魔王城戰死者的殘魂，被邪惡魔法束縛，無法安息。它們曾是勇敢的戰士或無辜的村民，如今只剩怨恨與痛苦，低語中訴說著未竟的遺願。寒氣是它們靈魂的碎片，試圖將活人拖入永恆的黑暗。', 
+        exp: 15, 
+        gold: 10, 
+        image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/ghost.png.png' 
+    },
+    { 
+        name: '火焰元素', 
+        hp: 35, 
+        attack: 14, 
+        defense: 5, 
+        special: 'burn', 
+        specialDesc: '燃燒', 
+        eventDesc: '一團熊熊燃燒的火焰，散發著炙熱的高溫，火焰中隱約可見人形。', 
+        story: '火焰元素是魔王召喚的純粹元素之力，從地獄深處的熔岩中誕生。它們沒有思想，只有毀滅的本能，火焰中隱約的人形是曾被獻祭的靈魂殘影。它們的存在是對生命的嘲弄，將一切化為灰燼。', 
+        exp: 22, 
+        gold: 13, 
+        image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/fireelemental.png.png' 
+    },
+    { 
+        name: '冰霜巨人', 
+        hp: 45, 
+        attack: 13, 
+        defense: 10, 
+        special: 'freeze', 
+        specialDesc: '凍結', 
+        eventDesc: '一座覆蓋冰霜的巨人，手中巨錘散發著寒氣，每一步都凍結地面。', 
+        story: '冰霜巨人來自北方冰原的古老種族，曾與人類簽訂和平契約。然而，魔王的黑暗魔法奴役了它們，將它們變成冷酷的守衛。巨錘中的寒氣是它們失去自由的象徵，每一擊都帶著對命運的無聲怒吼。', 
+        exp: 28, 
+        gold: 18, 
+        image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/frostgiant.png' 
+    },
+    { 
+        name: '毒蛇', 
+        hp: 25, 
+        attack: 11, 
+        defense: 4, 
+        special: 'poison', 
+        specialDesc: '中毒', 
+        eventDesc: '一條色彩斑斕的毒蛇，吐著信子，眼中閃著陰冷的光芒。', 
+        story: '毒蛇是魔王城地下深處的產物，牠們從被詛咒的沼澤中孵化，色彩斑斕的鱗片隱藏著致命劇毒。傳說這些蛇曾是某個失落王國的守護靈，被魔王的力量腐化，成為潛伏在陰影中的暗殺者。', 
+        exp: 20, 
+        gold: 12, 
+        image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/venomsnake.png' 
+    }
+];
+
+        const rewards = [
+    { name: '力量提升', desc: '永久提升5點攻擊力，增強你的戰鬥能力。', effect: () => { player.attack += 5; player.enhancements.push('力量提升 (攻擊 +5)'); updatePlayerPanel(); } },
+    { name: '生命提升', desc: '永久提升20點生命上限，並恢復等量HP（不超過上限）。', effect: () => { player.maxHp += 20; player.hp = Math.min(player.maxHp, player.hp + 20); player.enhancements.push('生命提升 (生命 +20)'); updatePlayerHpBar(); updatePlayerPanel(); } },
+    { name: '防禦提升', desc: '永久提升3點防禦力，減少受到的傷害。', effect: () => { player.defense += 3; player.enhancements.push('防禦提升 (防禦 +3)'); updatePlayerPanel(); } },
+    { name: '火焰魔法', desc: '獲得或升級火焰魔法，攻擊+10並附加灼燒效果（降低敵人防禦），等級越高傷害越高。', level: 1, effect: () => upgradeMagic('火焰魔法', '攻擊 +10 & 灼燒', 10) },
+    { name: '冰凍魔法', desc: '獲得或升級冰凍魔法，降低敵人攻擊力（初始70%效果），等級越高減益越強。', level: 1, effect: () => upgradeMagic('冰凍魔法', '降低敵人攻擊', 0.7) },
+    { name: '雷電魔法', desc: '獲得或升級雷電魔法，攻擊+15（50%命中率），等級越高傷害越高。', level: 1, effect: () => upgradeMagic('雷電魔法', '攻擊 +15 (50%命中)', 15) },
+    { name: '治療藥水', desc: '獲得一瓶治療藥水，使用後恢復20 HP並清除中毒狀態（最多持有1瓶）。', effect: () => { if (player.items.filter(item => item === '治療藥水 (恢復 20 HP)').length < 1) { player.items.push('治療藥水 (恢復 20 HP)'); player.inventory.push('治療藥水 (恢復 20 HP)'); updatePlayerPanel(); } } },
+    { name: '炸彈', desc: '獲得一枚炸彈，使用後對敵人造成50點固定傷害（最多持有1個）。', effect: () => { if (player.items.filter(item => item === '炸彈 (50 傷害)').length < 1) { player.items.push('炸彈 (50 傷害)'); player.inventory.push('炸彈 (50 傷害)'); updatePlayerPanel(); } } },
+    { name: '魔劍', desc: '獲得或升級魔劍，永久提升5點攻擊力，等級越高加成越多。', level: 1, effect: () => upgradeEquipment('魔劍', '攻擊 +5', 5) },
+    { name: '聖盾', desc: '獲得或升級聖盾，永久提升5點防禦力，等級越高加成越多。', level: 1, effect: () => upgradeEquipment('聖盾', '防禦 +5', 5) },
+    { name: '幸運戒指', desc: '獲得或升級幸運戒指，提升10%爆擊率，等級越高爆擊率越高。', level: 1, effect: () => upgradeAccessory('幸運戒指', '爆擊率 +10%', 0.1, 'critChance') },
+    { name: '風之護符', desc: '獲得或升級風之護符，提升10%迴避率，等級越高迴避率越高。', level: 1, effect: () => upgradeAccessory('風之護符', '迴避率 +10%', 0.1, 'dodgeChance') },
+    { name: '淨化項鍊', desc: '獲得或升級淨化項鍊，免疫中毒狀態，效果不隨等級變化。', level: 1, effect: () => upgradeAccessory('淨化項鍊', '免疫中毒', 'poison', 'immunities') },
+    { name: '火焰指環', desc: '獲得或升級火焰指環，免疫燃燒狀態，效果不隨等級變化。', level: 1, effect: () => upgradeAccessory('火焰指環', '免疫燃燒', 'burn', 'immunities') }
+        ];
+        const merchantOptions = {
+            '購買治療藥水 (20 金幣)': '花費20金幣購買一瓶治療藥水，使用後恢復20 HP並清除中毒狀態（最多持有1瓶）。',
+            '購買炸彈 (30 金幣)': '花費30金幣購買一枚炸彈，使用後對敵人造成50點固定傷害（最多持有1個）。',
+            '治癒狀態 (50 金幣)': '花費50金幣清除所有異常狀態（中毒、流血、詛咒、燃燒、凍結）。',
+            '離開': '結束與神秘商人的交易，返回行動選擇畫面。'
+        };
+        const exploreEvents = [
+            { name: '怪物', weight: 0.75, action: encounterMonster },
+            { name: '寶箱', weight: 0.05, action: offerReward },
+            { name: '陷阱', weight: 0.05, action: () => { player.hp = Math.max(0, player.hp - 15); display('腳下的石板突然下陷，<span class="action">毒刺</span>從四面刺出，你痛呼一聲，鮮血染紅地面，損失 <span class="status-negative">15 HP</span>！'); checkGameOver(); updatePlayerHpBar(); afterAction(); } },
+            { name: '事件', weight: 0.15, action: () => { const event = events[Math.floor(Math.random() * events.length)]; display(`你遇到了一個<span class="highlight">${event.name}</span>！`); event.action(); } }
+        ];
+        const floorActions = {
+    '探索': '深入魔王城探索，可能遭遇怪物、發現寶箱、觸發陷阱或遇到特殊事件（怪物機率75%，寶箱5%，陷阱5%，事件15%）。每次探索消耗1次行動，單層最多探索2次。',
+    '整備': '在安全角落休息，恢復15 HP並清除所有異常狀態（中毒、流血等），消耗1次行動。',
+    '訓練': '進行刻苦訓練，提升能力。25%機率大成功（攻擊+2或無提升，防禦+2），否則普通成功（攻擊+1或無提升，防禦+1），生命上限始終+5，消耗1次行動。'
+        };
+
+        const events = [
+            { name: '神秘商人', action: tradeWithMerchant },
+            { name: '老巫師', action: () => {
+                display('一位佝僂的<span class="highlight">老巫師</span>攔住你，他低語：“我能治癒你的痛苦。”');
+                clearChoices();
+                addChoice('接受治療 (恢復 30 HP)', () => {
+                    const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2025/02/beast-on-2.mp3'; // 預留音效 URL
+                    playSoundWithVolume(soundUrl); // 使用統一音量播放
+                    player.hp = Math.min(player.maxHp, player.hp + 30);
+                    display('老巫師揮動法杖，一陣暖光籠罩你，恢復 <span class="status-positive">30 HP</span>！');
+                    updatePlayerHpBar();
+                    afterAction();
+                });
+                addChoice('拒絕', () => {
+                    const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/12/guide-open.mp3'; // 預留音效 URL
+                    playSoundWithVolume(soundUrl); // 使用統一音量播放
+                    player.defense += 1;
+                    display('你硬派地拒絕了老巫師的治療，展現堅韌意志，防禦提升 <span class="status-positive">1 點</span>！');
+                    updatePlayerPanel();
+                    afterAction();
+                });
+            } },
+            { name: '詛咒雕像', action: () => { applyStatus('詛咒', 2); display('你觸碰了一座詭異的<span class="highlight">雕像</span>，一陣黑霧纏繞你，你感到力量被削弱，進入<span class="status-negative">詛咒</span>狀態！'); updatePlayerPanel(); afterAction(); } }
+        ];
+
+        const specialActions = [
+    {
+        name: '戰吼',
+        desc: '發出震懾吼聲，暫時提升5點攻擊力，敵人隨即行動。',
+        action: () => {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/12/bear-sounds.mp3';
+            playSoundWithVolume(soundUrl);
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                display('你發出一聲驚天動地的<span class="action">戰吼</span>，肌肉鼓脹，力量激增，攻擊力暫時提升 <span class="status-positive">5 點</span>！', true);
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        player.tempStats.attack += 5;
+                        updatePlayerPanel();
+                        enemyTurn();
+                    }, 1000);
+                }, 1000);
+            }, 300);
+        }
+    },
+    {
+        name: '靈巧翻滾',
+        desc: '敏捷翻滾，暫時提升3點防禦力，敵人隨即行動。',
+        action: () => {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/05/閃躲.mp3';
+            playSoundWithVolume(soundUrl);
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                display('你靈敏地<span class="action">翻滾</span>一圈，找到最佳防守位置，防禦力暫時提升 <span class="status-positive">3 點</span>！', true);
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        player.tempStats.defense += 3;
+                        updatePlayerPanel();
+                        enemyTurn();
+                    }, 1000);
+                }, 1000);
+            }, 300);
+        }
+    },
+    {
+        name: '冥想',
+        desc: '靜心冥想，恢復15 HP，敵人隨即行動。',
+        action: () => {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/10/聖魔法.mp3';
+            playSoundWithVolume(soundUrl);
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                display('你閉目<span class="action">冥想</span>，調息之間，身體的傷痛緩緩消退，恢復 <span class="status-positive">15 HP</span>！', true);
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        player.hp = Math.min(player.maxHp, player.hp + 15);
+                        player.tempStats.hp += 15;
+                        updatePlayerHpBar();
+                        updatePlayerPanel();
+                        enemyTurn();
+                    }, 1000);
+                }, 1000);
+            }, 300);
+        }
+    },
+    {
+        name: '挑釁',
+        desc: '挑釁敵人，降低其5點攻擊力，敵人隨即行動。',
+        action: () => {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/03/skill-change.mp3';
+            playSoundWithVolume(soundUrl);
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                display('你對敵人<span class="action">挑釁</span>，激怒了它，它氣得失去理智，攻擊力降低 <span class="status-negative">5 點</span>！', true);
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        enemy.attack = Math.max(0, enemy.attack - 5);
+                        enemyTurn();
+                    }, 1000);
+                }, 1000);
+            }, 300);
+        }
+    },
+    {
+        name: '迅捷一擊',
+        desc: '快速攻擊，造成基礎傷害，無視敵人防禦，敵人隨即行動。',
+        action: () => {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/02/Start-phy.mp3';
+            playSoundWithVolume(soundUrl);
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                let damage = player.attack + player.tempStats.attack;
+                display(`你身形如風，<span class="action">迅捷一擊</span>劃出一道殘影，對<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>造成 ${damage} 點傷害！`, true);
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        enemy.hp -= damage;
+                        updateEnemyHpBar();
+                        enemy.hp <= 0 ? winCombat() : enemyTurn();
+                    }, 1000);
+                }, 1000);
+            }, 300);
+        }
+    },
+    {
+        name: '祈禱',
+        desc: '祈求神助，50%機率恢復10 HP，敵人隨即行動。',
+        action: () => {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/04/dice.mp3';
+            playSoundWithVolume(soundUrl);
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                if (Math.random() < 0.5) {
+                    player.hp = Math.min(player.maxHp, player.hp + 10);
+                    player.tempStats.hp += 10;
+                    display('你低聲<span class="action">祈禱</span>，聖光灑下，恢復 <span class="status-positive">10 HP</span>！', true);
+                } else {
+                    display('你<span class="action">祈禱</span>無果，天空毫無回應。', true);
+                }
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        updatePlayerHpBar();
+                        updatePlayerPanel();
+                        enemyTurn();
+                    }, 1000);
+                }, 1000);
+            }, 300);
+        }
+    }
+];
+
+        const combatActions = {
+    '攻擊': '使用武器對敵人造成基礎傷害，根據攻擊力和敵人防禦計算。',
+    '防禦姿態': '進入防禦狀態，下回合受到的傷害減半。',
+    '使用火焰魔法': '釋放火焰攻擊，造成額外傷害並可能引發燃燒效果（降低敵人防禦）。',
+    '使用冰凍魔法': '召喚寒霜，降低敵人攻擊力，使用次數有限。',
+    '使用雷電魔法': '釋放雷電，50%命中率，命中時造成高額傷害。',
+    '使用治療藥水': '飲用藥水恢復20 HP，並清除中毒狀態（需持有藥水）。',
+    '使用炸彈': '投擲炸彈，對敵人造成50點固定傷害（需持有炸彈）。',
+    '逃跑': '試圖逃離戰鬥，60%成功率，失敗則敵人立刻反擊。'
+};
+
+        function showTitleScreen() {
+    titleScreen.style.display = 'flex';
+    gameContent.style.display = 'none';
+    
+    // 移除舊的事件監聽器（避免重複綁定）
+    startButton.removeEventListener('click', startGameHandler);
+    // 定義事件處理函數
+    function startGameHandler() {
+        const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/03/skill-change.mp3';
+        playSoundWithVolume(soundUrl);
+        titleScreen.style.display = 'none';
+        gameContent.style.display = 'block';
+        startGame();
+    }
+    // 只綁定一次
+    startButton.addEventListener('click', startGameHandler, { once: true });
+}
+        function display(text, isPlayerAction = false) {
+            const p = document.createElement('p');
+            p.innerHTML = text;
+            p.style.opacity = '0'; // 初始設為透明
+            output.appendChild(p);
+            output.scrollTop = output.scrollHeight;
+            if (isPlayerAction) {
+                setTimeout(() => {
+                    p.classList.add('bounce-in');
+                    setTimeout(() => {
+                        p.style.opacity = '1';
+                    }, 500); // 與 bounceIn 動畫時間一致
+                }, 500); // 玩家行動文字延遲 0.5 秒彈入
+            } else {
+                setTimeout(() => {
+                    p.classList.add('bounce-in');
+                    setTimeout(() => {
+                        p.style.opacity = '1';
+                    }, 500); // 與 bounceIn 動畫時間一致
+                }, 500); // 怪物行動文字延遲 0.5 秒彈入
+            }
+        }
+
+        // 添加 clearOutput 函數
+        function clearOutput() {
+            const paragraphs = output.querySelectorAll('p');
+            paragraphs.forEach(p => {
+                p.classList.remove('bounce-in'); // 移除 bounce-in 以避免衝突
+                p.classList.add('fade-out');
+                setTimeout(() => {
+                    p.remove(); // 動畫完成後移除
+                }, 500); // 與 fadeOut 動畫時間一致
+            });
+        }
+        function clearChoices() {
+            choices.innerHTML = '';
+            playerImage.classList.remove('shake-up'); // 停止戰鬥結束晃動
+        }
+
+        function addChoice(text, callback) {
+            const button = document.createElement('button');
+            button.innerHTML = text.replace(/ˢᴾ (.*)/, '<span class="special-action">$1</span>');
+            
+            // 如果是特殊行動，添加 special-action-button 類別
+            if (text.startsWith('ˢᴾ ')) {
+                button.classList.add('special-action-button');
+            }
+        
+            if (player.sealedAction && text.includes(player.sealedAction)) {
+                button.disabled = true;
+                button.style.opacity = '0.5';
+                button.style.cursor = 'not-allowed';
+            }
+            if (text === '<span class="action">使用冰凍魔法</span>' && player.iceMagicUses >= 2) {
+                button.disabled = true;
+                button.style.opacity = '0.5';
+                button.style.cursor = 'not-allowed';
+            }
+            button.onclick = () => {
+                clearOutput();
+                setTimeout(() => {
+                    callback();
+                }, 500);
+            };
+        
+            // 長按檢測
+            let longPressTimer;
+            button.addEventListener('mousedown', startLongPress);
+            button.addEventListener('touchstart', startLongPress, { passive: true });
+            button.addEventListener('mouseup', endLongPress);
+            button.addEventListener('touchend', endLongPress);
+            button.addEventListener('mouseleave', endLongPress);
+            button.addEventListener('touchcancel', endLongPress);
+        
+            function startLongPress(e) {
+                longPressTimer = setTimeout(() => {
+                    showActionInfo(text);
+                }, 500);
+            }
+        
+            function endLongPress() {
+                clearTimeout(longPressTimer);
+            }
+        
+            choices.appendChild(button);
+        }
+
+        function showActionInfo(actionText) {
+            let info = '';
+            const cleanText = actionText.replace(/<span class="action">|<\/span>/g, '');
+            if (floorActions[cleanText]) {
+                info = `<strong>${cleanText}</strong><br>${floorActions[cleanText]}`;
+            } else if (combatActions[cleanText]) {
+                info = `<strong>${cleanText}</strong><br>${combatActions[cleanText]}`;
+            } else if (cleanText.startsWith('ˢᴾ ')) {
+                const specialName = cleanText.replace('ˢᴾ ', '');
+                const special = specialActions.find(s => s.name === specialName);
+                if (special) {
+                    info = `<strong>${special.name}</strong><br>${special.desc}`;
+                }
+            } else if (rewards.find(r => r.name === cleanText)) {
+                const reward = rewards.find(r => r.name === cleanText);
+                info = `<strong>${reward.name}</strong><br>${reward.desc}`;
+            } else if (merchantOptions[cleanText]) {
+                info = `<strong>${cleanText}</strong><br>${merchantOptions[cleanText]}`;
+            }
+        
+            if (info) {
+                infoBox.innerHTML = info;
+                infoBox.style.display = 'block';
+                setTimeout(() => infoBox.classList.add('visible'), 10); // 延遲添加類別以觸發動畫
+            }
+        }
+        
+        function showEnemyInfo(enemyData) {
+            infoBox.innerHTML = `
+                <img src="${enemy.image}" alt="${enemy.name}">
+                <strong>${enemy.name}</strong>
+                <div class="stats-grid">
+                    <span>HP: ${enemy.hp}/${enemy.maxHp}</span>
+                    <span>攻擊: ${enemy.attack}</span>
+                    <span>防禦: ${enemy.defense}</span>
+                    <span>特性: ${enemy.specialDesc}</span>
+                    <span>經驗值: ${enemy.exp}</span>
+                    <span>金幣: ${enemy.gold}</span>
+                </div>
+                <div class="story">
+                    <p>${enemy.story.split('。')[0]}。</p>
+                    <p>${enemy.story.split('。')[1]}。</p>
+                    <p>${enemy.story.split('。')[2]}。</p>
+                </div>
+            `;
+            infoBox.style.display = 'block';
+            setTimeout(() => infoBox.classList.add('visible'), 10);
+        }
+        
+        // 更新外部點擊關閉邏輯
+        document.addEventListener('click', (e) => {
+            if (!infoBox.contains(e.target) && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'IMG') {
+                infoBox.classList.remove('visible');
+                setTimeout(() => infoBox.style.display = 'none', 300); // 等待淡出動畫完成
+            }
+        });
+
+        function updatePlayerHpBar() {
+            const percentage = (player.hp / player.maxHp) * 100;
+            playerHpBar.style.width = `${percentage}%`;
+            playerHpText.textContent = `${player.hp}/${player.maxHp}`;
+        }
+
+        function updateEnemyHpBar() {
+            if (!enemy) {
+                enemyHpBar.style.width = '0%';
+                enemyHpText.textContent = '';
+                enemyImage.innerHTML = '';
+                return;
+            }
+            const percentage = (enemy.hp / enemy.maxHp) * 100;
+            enemyHpBar.style.width = `${percentage}%`;
+            enemyHpText.textContent = `${enemy.hp}/${enemy.maxHp}`;
+        }
+
+        function setEnemyImage(enemyName) {
+            if (enemy && enemy.image) {
+                enemyImage.innerHTML = `<img src="${enemy.image}" alt="${enemyName}" onerror="this.onerror=null; this.src='https://via.placeholder.com/80x65?text=Enemy'">`;
+            } else {
+                enemyImage.innerHTML = `<img src="https://via.placeholder.com/80x65?text=Enemy" alt="Default Enemy">`;
+            }
+            enemyImage.onclick = () => showEnemyInfo(enemy); // 直接傳入當前 enemy
+        }
+
+document.addEventListener('click', (e) => {
+    if (!infoBox.contains(e.target) && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'IMG') {
+        infoBox.style.display = 'none';
+    }
+});function setEnemyImage(enemyName) {
+    const enemyData = enemies.find(e => e.name === enemyName);
+    if (enemyData && enemyData.image) {
+        enemyImage.innerHTML = `<img src="${enemyData.image}" alt="${enemyName}" onerror="this.onerror=null; this.src='https://via.placeholder.com/80x65?text=Enemy'">`;
+    } else if (enemy && enemy.image) {
+        enemyImage.innerHTML = `<img src="${enemy.image}" alt="${enemyName}" onerror="this.onerror=null; this.src='https://via.placeholder.com/80x65?text=Enemy'">`;
+    } else {
+        enemyImage.innerHTML = `<img src="https://via.placeholder.com/80x65?text=Enemy" alt="Default Enemy">`;
+    }
+
+    enemyImage.onclick = () => showEnemyInfo(enemyData || enemy);
+}
+
+document.addEventListener('click', (e) => {
+    if (!infoBox.contains(e.target) && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'IMG') {
+        infoBox.style.display = 'none';
+    }
+});
+
+        function updatePlayerPanel() {
+            playerHpBar.style.width = `${(player.hp / player.maxHp) * 100}%`;
+            playerHpText.textContent = `${player.hp}/${player.maxHp}`;
+            document.getElementById('playerAttack').textContent = player.attack + player.tempStats.attack;
+            document.getElementById('playerDefense').textContent = player.defense + player.tempStats.defense;
+            document.getElementById('playerLevel').textContent = player.level;
+            document.getElementById('playerExp').textContent = player.exp;
+            document.getElementById('playerExpToNext').textContent = player.expToNextLevel;
+            document.getElementById('playerGold').textContent = player.gold;
+            document.getElementById('playerActionsLeft').textContent = actionsLeft;
+
+            // 更新詳細資訊
+            document.getElementById('playerHpDetail').textContent = `${player.hp}/${player.maxHp}`;
+            document.getElementById('playerCritChance').textContent = `${(player.critChance * 100).toFixed(0)}%`;
+            document.getElementById('playerDodgeChance').textContent = `${(player.dodgeChance * 100).toFixed(0)}%`;
+            document.getElementById('playerMagic').innerHTML = player.magic.length > 0 ? player.magic.map(item => `<span class="highlight">${item.split(' (')[0]}</span> (${item.split(' (')[1]}`).join(', ') : '無';
+            document.getElementById('playerItems').innerHTML = player.items.length > 0 ? player.items.map(item => `<span class="highlight">${item.split(' (')[0]}</span> (${item.split(' (')[1]}`).join(', ') : '無';
+            document.getElementById('playerEnhancements').innerHTML = player.enhancements.length > 0 ? player.enhancements.map(item => `<span class="highlight">${item.split(' (')[0]}</span> (${item.split(' (')[1]}`).join(', ') : '無';
+            document.getElementById('playerEquipment').innerHTML = player.equipment.length > 0 ? player.equipment.map(item => `<span class="highlight">${item.split(' (')[0]}</span> (${item.split(' (')[1]}`).join(', ') : '無';
+            document.getElementById('playerStatus').innerHTML = player.status.length > 0 ? player.status.map(s => `<span class="${s === '祝福' ? 'status-positive' : 'status-negative'}">${s}</span>`).join(', ') : '正常';
+            document.getElementById('playerImmunities').textContent = player.immunities.length > 0 ? player.immunities.join(', ') : '無';
+        }
+
+        function shakeScreen() {
+            gameContainer.classList.add('shake');
+            setTimeout(() => gameContainer.classList.remove('shake'), 200);
+        }
+
+        function flashScreen() {
+            gameContainer.classList.add('flash');
+            setTimeout(() => gameContainer.classList.remove('flash'), 500);
+        }
+
+        function checkGameOver() {
+            if (player.hp <= 0) {
+                display('你的身體再也支撐不住，鮮血染紅地面，黑暗吞噬了你的意識……<span class="action">遊戲結束</span>。');
+                gameState = 'end';
+                clearChoices();
+                addChoice('重新開始', () => location.reload());
+                addChoice('載入進度', loadGame);
+                return true;
+            }
+            return false;
+        }
+
+        function applyStatus(status, turns) {
+            if (!player.status.includes(status) && !player.immunities.includes(status)) {
+                player.status.push(status);
+                statusTurns[status] = turns;
+                display(`你陷入<span class="status-negative">${status}</span>狀態！`);
+            }
+        }
+
+        function updateStatus() {
+            for (let status in statusTurns) {
+                if (player.status.includes(status)) {
+                    statusTurns[status]--;
+                    if (statusTurns[status] <= 0) {
+                        player.status = player.status.filter(s => s !== status);
+                        delete statusTurns[status];
+                        display(`<span class="status-${status === '祝福' ? 'positive' : 'negative'}">${status}</span>效果消失！`);
+                    }
+                }
+            }
+            updatePlayerPanel();
+        }
+
+        function upgradeEquipment(name, desc, value) {
+            const existing = player.equipment.find(item => item.startsWith(name));
+            if (existing) {
+                const level = parseInt(existing.match(/Lv\.(\d+)/)?.[1] || 1) + 1;
+                player.equipment = player.equipment.filter(item => !item.startsWith(name));
+                player.equipment.push(`${name} Lv.${level} (${desc.replace(/\d+/, parseInt(desc.match(/\d+/)?.[0] || 0) + value)})`);
+                if (desc.includes('攻擊')) player.attack += value;
+                if (desc.includes('防禦')) player.defense += value;
+                display(`你的<span class="highlight">${name}</span>升級為 Lv.${level}，效果增強！`);
+            } else {
+                player.equipment.push(`${name} Lv.1 (${desc})`);
+                if (desc.includes('攻擊')) player.attack += value;
+                if (desc.includes('防禦')) player.defense += value;
+                player.inventory.push(name);
+            }
+            updatePlayerPanel();
+        }
+
+        function upgradeMagic(name, desc, value) {
+            const existing = player.magic.find(item => item.startsWith(name));
+            if (existing) {
+                const level = parseInt(existing.match(/Lv\.(\d+)/)?.[1] || 1) + 1;
+                player.magic = player.magic.filter(item => !item.startsWith(name));
+                let newDesc = desc;
+                if (desc.includes('攻擊 +')) newDesc = `攻擊 +${parseInt(desc.match(/\d+/)?.[0] || 0) + 5}${desc.includes('灼燒') ? ' & 灼燒' : ''}${desc.includes('50%命中') ? ' (50%命中)' : ''}`;
+                if (desc.includes('降低敵人攻擊')) newDesc = `降低敵人攻擊 (效果提升${Math.round((1 - value) * 100)}%)`;
+                player.magic.push(`${name} Lv.${level} (${newDesc})`);
+                display(`你的<span class="highlight">${name}</span>升級為 Lv.${level}，效果增強！`);
+            } else {
+                player.magic.push(`${name} Lv.1 (${desc})`);
+                player.inventory.push(name);
+            }
+            updatePlayerPanel();
+        }
+
+        function upgradeAccessory(name, desc, value, property) {
+            const existing = player.equipment.find(item => item.startsWith(name));
+            if (existing) {
+                const level = parseInt(existing.match(/Lv\.(\d+)/)?.[1] || 1) + 1;
+                player.equipment = player.equipment.filter(item => !item.startsWith(name));
+                let newDesc = desc;
+                if (desc.includes('爆擊率') || desc.includes('迴避率')) {
+                    const newValue = parseFloat(desc.match(/\d+/)?.[0] || 0) + (value * 100);
+                    newDesc = desc.replace(/\d+%/, `${newValue}%`);
+                    player[property] += value;
+                } else if (desc.includes('免疫')) {
+                    newDesc = desc;
+                }
+                player.equipment.push(`${name} Lv.${level} (${newDesc})`);
+                display(`你的<span class="highlight">${name}</span>升級為 Lv.${level}，效果增強！`);
+            } else {
+                player.equipment.push(`${name} Lv.1 (${desc})`);
+                if (desc.includes('爆擊率')) player.critChance += value;
+                if (desc.includes('迴避率')) player.dodgeChance += value;
+                if (desc.includes('免疫')) player.immunities.push(value);
+                player.inventory.push(name);
+            }
+            updatePlayerPanel();
+        }
+
+        function saveGame() {
+            const saveData = { player, currentFloor, actionsLeft, exploreCount, bossDefeatedCount };
+            localStorage.setItem('roguelikeSave', JSON.stringify(saveData));
+            display('進度已自動保存！');
+        }
+
+        function loadGame() {
+    const saveData = localStorage.getItem('roguelikeSave');
+    if (saveData) {
+        const data = JSON.parse(saveData);
+        player = data.player;
+        currentFloor = data.currentFloor;
+        actionsLeft = data.actionsLeft;
+        exploreCount = data.exploreCount;
+        bossDefeatedCount = data.bossDefeatedCount || 0;
+        baseStats = { attack: player.attack, defense: player.defense, hp: player.hp };
+        display('古老的魔法卷軸閃爍光芒，你的冒險旅程從記憶中復甦，已載入保存的進度！');
+        updatePlayerHpBar();
+        updatePlayerPanel();
+        showFloorOptions();
+    } else {
+        display('未找到存檔，請開始新的冒險！');
+        clearChoices();
+        addChoice('回到標題畫面', showTitleScreen);
+    }
+}
+
+function startGame() {
+    display(`你是一名孤獨的騎士，曾經守護王國邊境，但魔王的崛起摧毀了你的家園。你發誓要復仇，帶著破舊的盔甲和一顆堅定的心，踏入魔王城，尋找救贖與榮耀。<br><br>深吸一口氣後，你踏入<span class="highlight">魔王城</span>那陰森森的大門，腐朽的氣息撲面而來，未知的危險在黑暗中潛伏。<br><br>你握緊手中的武器，準備迎接命運的考驗 - HP: ${player.hp}/${player.maxHp}, 攻擊: ${player.attack}, 防禦: ${player.defense}`);
+    gameState = 'floor';
+    actionsLeft = 3;
+    exploreCount = 0;
+    bossDefeatedCount = 0;
+    clearChoices();
+    addChoice('開始冒險', () => {
+        if (!backgroundMusic) {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2025/02/Echoes-of-the-Abyss-ext-v2.mp3';
+            backgroundMusic = new Audio(soundUrl);
+            backgroundMusic.loop = true;
+            backgroundMusic.volume = 0.2;
+            backgroundMusic.play().catch(error => {
+                console.error('背景音樂播放失敗:', error);
+            });
+        }
+        showFloorOptions();
+    });
+    addChoice('載入進度', loadGame);
+    updatePlayerHpBar();
+    updatePlayerPanel();
+    updateEnemyHpBar();
+
+    // 為玩家圖片綁定點擊事件
+    playerImage.onclick = () => showPlayerInfo();
+}
+// 新增顯示玩家資訊的函數
+function showPlayerInfo() {
+    infoBox.innerHTML = `
+        <img src="${player.image}" alt="${player.name}">
+        <strong>${player.name}</strong>
+        <div class="stats-grid">
+            <span>HP: ${player.hp}/${player.maxHp}</span>
+            <span>攻擊: ${player.attack + player.tempStats.attack}</span>
+            <span>防禦: ${player.defense + player.tempStats.defense}</span>
+            <span>金幣: ${player.gold}</span>
+            <span>等級: ${player.level}</span>
+            <span>經驗: ${player.exp}/${player.expToNextLevel}</span>
+            <span>爆擊率: ${(player.critChance * 100).toFixed(0)}%</span>
+            <span>迴避率: ${(player.dodgeChance * 100).toFixed(0)}%</span>
+        </div>
+        <details>
+            <summary>更多資訊</summary>
+            <p>魔法: ${player.magic.length > 0 ? player.magic.join(', ') : '無'}</p>
+            <p>道具: ${player.items.length > 0 ? player.items.join(', ') : '無'}</p>
+            <p>強化: ${player.enhancements.length > 0 ? player.enhancements.join(', ') : '無'}</p>
+            <p>裝備: ${player.equipment.length > 0 ? player.equipment.join(', ') : '無'}</p>
+            <p>狀態: ${player.status.length > 0 ? player.status.map(s => `<span class="${s === '祝福' ? 'status-positive' : 'status-negative'}">${s}</span>`).join(', ') : '正常'}</p>
+            <p>免疫: ${player.immunities.length > 0 ? player.immunities.join(', ') : '無'}</p>
+        </details>
+        <div class="story">
+            <p>在王國邊境的風霜中，你曾是無人不知的守護者，手持長劍守望著和平的歲月。每當夜幕降臨，村落的燈火是你心中的慰藉。</p>
+            <p>然而，那個血腥的夜晚，魔王的軍團如潮水般湧來，火焰吞噬了你的故鄉，親人的哭喊在耳邊回響。你跪在廢墟中，握緊斷裂的劍刃，立下誓言：不惜一切代價，也要讓魔王付出血債。</p>
+            <p>如今，孤身一人的你踏入這片詛咒之地，盔甲上的每一道傷痕，都是你不屈的證明。</p>
+        </div>
+    `;
+    infoBox.style.display = 'block';
+    setTimeout(() => infoBox.classList.add('visible'), 10);
+}
+// 初始化標題畫面
+showTitleScreen();
+        
+        // 為所有音效設置統一音量（範例：0.5）
+        function playSoundWithVolume(soundUrl) {
+            if (soundUrl) {
+                const audio = new Audio(soundUrl);
+                audio.volume = 1; // 設置短暫音效音量為 50%
+                audio.play().catch(error => {
+                    console.error('音效播放失敗:', error);
+                });
+            }
+        }
+
+        function showFloorOptions() {
+    saveGame();
+    display(`你位於第 ${currentFloor} 層，還有 ${actionsLeft} 次行動可執行。請選擇你的行動：`);
+    gameState = 'floor';
+    clearChoices();
+    addChoice('<span class="action">探索</span>', explore);
+    addChoice('<span class="action">整備</span>', prepare);
+    addChoice('<span class="action">訓練</span>', train);
+    if (actionsLeft <= 0) {
+        enterNextFloorBattle();
+    }
+}
+
+        function explore() {
+            if (exploreCount >= 2) {
+                display('你已經探索了兩次，無法再次探索！');
+                showFloorOptions();
+                return;
+            }
+            exploreCount++;
+            actionsLeft--;
+            const rand = Math.random();
+            let selectedEvent;
+            if (rand < 0.75) selectedEvent = exploreEvents[0];
+            else if (rand < 0.80) selectedEvent = exploreEvents[1];
+            else if (rand < 0.85) selectedEvent = exploreEvents[2];
+            else selectedEvent = exploreEvents[3];
+            display(`你決定探索魔王城的深處，遭遇了${selectedEvent.name}！`);
+            selectedEvent.action();
+        }
+
+        function prepare() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/04/dice.mp3'; // 預留音效 URL
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            actionsLeft--;
+            player.hp = Math.min(player.maxHp, player.hp + 15);
+            player.status = player.status.filter(s => s !== '中毒' && s !== '流血' && s !== '詛咒' && s !== '燃燒' && s !== '凍結');
+            for (let s in statusTurns) delete statusTurns[s];
+            display('你找了一個安全的角落，整理裝備並休息片刻，恢復 <span class="status-positive">15 HP</span>，並清除了所有異常狀態。');
+            updatePlayerHpBar();
+            updatePlayerPanel();
+            afterAction();
+        }
+
+        function train() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/01/dragon-5.mp3'; // 預留音效 URL
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            actionsLeft--;
+            const isBigSuccess = Math.random() < 0.25;
+            const attackBoost = isBigSuccess ? (Math.random() < 0.5 ? 2 : 0) : (Math.random() < 0.5 ? 1 : 0);
+            const defenseBoost = isBigSuccess ? 2 : 1;
+            const hpBoost = 5;
+
+            player.attack += attackBoost;
+            player.defense += defenseBoost;
+            player.maxHp += hpBoost;
+            player.hp = Math.min(player.maxHp, player.hp + hpBoost);
+
+            if (isBigSuccess) {
+                display(`你在魔王城的空地上進行刻苦訓練，大成功！攻擊${attackBoost > 0 ? '提升 <span class="status-positive">' + attackBoost + ' 點</span>' : '未提升'}，防禦提升 <span class="status-positive">${defenseBoost} 點</span>，生命上限提升 <span class="status-positive">${hpBoost} 點</span>！`);
+            } else {
+                display(`你在魔王城的空地上進行訓練，攻擊${attackBoost > 0 ? '提升 <span class="status-positive">' + attackBoost + ' 點</span>' : '未提升'}，防禦提升 <span class="status-positive">${defenseBoost} 點</span>，生命上限提升 <span class="status-positive">${hpBoost} 點</span>！`);
+            }
+            updatePlayerHpBar();
+            updatePlayerPanel();
+            afterAction();
+        }
+
+        function afterAction() {
+            if (gameState !== 'end') {
+                showFloorOptions();
+            }
+        }
+
+        function enterNextFloorBattle() {
+            display(`你準備進入第 ${currentFloor + 1} 層，但必須先通過守衛的試煉！`);
+            baseStats = { attack: player.attack, defense: player.defense, hp: player.hp };
+            encounterMonster();
+        }
+
+        function nextFloor() {
+            saveGame();
+            if (currentFloor >= 10) {
+                finalBoss();
+                return;
+            }
+            flashScreen();
+            display(`你完成了第 ${currentFloor} 層的所有行動，準備前往下一層！`);
+            currentFloor++;
+            actionsLeft = 3;
+            exploreCount = 0;
+            clearChoices();
+            addChoice('繼續', showFloorOptions);
+            updatePlayerPanel();
+        }
+
+        function encounterMonster() {
+            enemy = generateEnemy();
+            enemy.maxHp = enemy.hp; // 已經在 generateEnemy 中設置，這行可移除
+            const enemySpan = `<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>`;
+            display(`黑暗中傳來異樣的聲響，${enemy.eventDesc}一隻${enemySpan}緩緩逼近，敵人屬性 - HP: ${enemy.hp}, 攻擊: ${enemy.attack}, 防禦: ${enemy.defense}`);
+            setEnemyImage(enemy.name);
+            gameState = 'combat';
+            showCombatOptions();
+            updateEnemyHpBar();
+        }
+
+        function generateEnemy() {
+            const base = enemies[Math.floor(Math.random() * enemies.length)];
+            const multiplier = currentFloor * 0.5;
+            return {
+                name: base.name,
+                hp: Math.floor(base.hp * (1 + multiplier)),
+                maxHp: Math.floor(base.hp * (1 + multiplier)), // 確保 maxHp 也被設置
+                attack: Math.floor(base.attack * (1 + multiplier)),
+                defense: Math.floor(base.defense * (1 + multiplier)),
+                special: base.special,
+                specialDesc: base.specialDesc, // 添加中文特性描述
+                eventDesc: base.eventDesc, // 添加遭遇描述
+                story: base.story, // 添加背景故事
+                exp: Math.floor(base.exp * (1 + multiplier)),
+                gold: Math.floor(base.gold * (1 + multiplier)),
+                image: base.image
+            };
+        }
+
+        function checkLevelUp() {
+            while (player.exp >= player.expToNextLevel) {
+                player.level++;
+                player.exp -= player.expToNextLevel;
+                player.expToNextLevel = Math.floor(player.expToNextLevel * 1.5);
+                player.attack += 1;
+                player.defense += 1;
+                player.maxHp += 10;
+                player.hp = player.maxHp;
+                baseStats.attack = player.attack;
+                baseStats.defense = player.defense;
+                baseStats.hp = player.hp;
+                display(`一股暖流湧遍全身，你升到了等級 ${player.level}！攻擊 +1，防禦 +1，生命上限 +10，並完全恢復！`);
+                updatePlayerHpBar();
+                updatePlayerPanel();
+            }
+        }
+
+        function showCombatOptions() {
+    if (!enemy || (gameState !== 'combat' && gameState !== 'boss')) return;
+    clearChoices();
+    addChoice('<span class="action">攻擊</span>', attackEnemy);
+    addChoice('<span class="action">防禦姿態</span>', defend);
+    if (player.inventory.includes('治療藥水 (恢復 20 HP)')) addChoice('<span class="action">使用治療藥水</span>', usePotion);
+    if (player.inventory.includes('炸彈 (50 傷害)')) addChoice('<span class="action">使用炸彈</span>', useBomb);
+    player.magic.forEach(magic => {
+        if (magic.startsWith('火焰魔法')) addChoice('<span class="action">使用火焰魔法</span>', useFireMagic);
+        if (magic.startsWith('冰凍魔法')) addChoice('<span class="action">使用冰凍魔法</span>', useIceMagic);
+        if (magic.startsWith('雷電魔法')) addChoice('<span class="action">使用雷電魔法</span>', useThunderMagic);
+    });
+    addChoice('<span class="action">逃跑</span>', attemptEscape);
+
+    const special = specialActions[Math.floor(Math.random() * specialActions.length)];
+    addChoice(`ˢᴾ ${special.name}`, special.action); // 這裡會觸發 special-action-button
+}
+
+        const attackDescriptions = [
+            (damage) => `你揮舞武器，劃破空氣，狠狠砍向<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>，造成 ${damage} 點傷害！`,
+            (damage) => `你怒吼一聲，手中利刃閃爍寒光，刺入<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>的身軀，鮮血飛濺，造成了 ${damage} 點傷害！`
+        ];
+
+        const critDescriptions = [
+            (damage) => `你找到破綻，<span class="action">致命一擊</span>！武器無視防禦深深嵌入<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>的要害，爆擊造成 ${damage} 點傷害！`
+        ];
+
+        function attackEnemy() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/03/hp-decrease.mp3';
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            defending = false;
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                let totalDamage = 0;
+                let attacks = player.dodgeChance > 0 ? 2 : 1;
+                for (let i = 0; i < attacks; i++) {
+                    let damage = player.attack + player.tempStats.attack;
+                    const isCrit = Math.random() < player.critChance;
+                    if (isCrit) {
+                        damage = Math.floor(damage * 1.5);
+                        damage = Math.max(1, damage);
+                        display(critDescriptions[Math.floor(Math.random() * critDescriptions.length)](damage), true);
+                    } else {
+                        damage = Math.max(1, damage - enemy.defense);
+                        if (player.status.includes('詛咒')) damage = Math.floor(damage * 0.7);
+                        display(attackDescriptions[Math.floor(Math.random() * attackDescriptions.length)](damage), true);
+                    }
+                    totalDamage += damage;
+                }
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        enemy.hp -= totalDamage;
+                        display(`敵人 HP: ${enemy.hp}`);
+                        updateEnemyHpBar();
+                        if (enemy.hp <= 0) {
+                            winCombat();
+                        } else {
+                            enemyTurn();
+                        }
+                    }, 500);
+                }, 500);
+            }, 300);
+        }
+        function defend() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/05/防禦.mp3'; // 預留音效 URL
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            defending = true;
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                display('你雙手緊握武器，架起<span class="action">防禦姿態</span>，準備迎接敵人的猛攻，減少受到的傷害。', true);
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        enemyTurn();
+                    }, 500); // 縮短為 0.5 秒
+                }, 500); // 縮短為 0.5 秒
+            }, 300);
+        }
+
+        function useFireMagic() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2025/02/firemagic.mp3'; // 預留音效 URL
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            defending = false;
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                const level = parseInt(player.magic.find(m => m.startsWith('火焰魔法'))?.match(/Lv\.(\d+)/)?.[1] || 1);
+                let damage = Math.max(1, (player.attack + player.tempStats.attack) + 10 + (level - 1) * 5 - enemy.defense);
+                const isCrit = Math.random() < player.critChance;
+                if (isCrit) {
+                    damage = Math.floor(damage * 1.5);
+                    display(`你雙手燃起熊熊烈焰，朝<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>射出一道<span class="action">火龍</span>，爆擊燒焦了它的身軀，造成 ${damage} 點傷害！`, true);
+                } else {
+                    display(`你低喝一聲，<span class="action">火焰</span>從指尖噴湧而出，炙熱的火舌舔舐著<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>，造成 ${damage} 點傷害！`, true);
+                }
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        enemy.hp -= damage;
+                        applyStatus('燃燒', 2);
+                        enemy.defense = Math.max(0, enemy.defense - 5);
+                        display(`<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>被<span class="status-negative">灼燒</span>，防禦下降 5 點！`);
+                        display(`敵人 HP: ${enemy.hp}`);
+                        updateEnemyHpBar();
+                        if (enemy.hp <= 0) {
+                            winCombat();
+                        } else {
+                            enemyTurn();
+                        }
+                    }, 500);
+                }, 300);
+            }, 300);
+        }
+
+        function useIceMagic() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2025/02/icemagic.mp3'; // 預留音效 URL
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            defending = false;
+            if (player.iceMagicUses >= 2) {
+                display(`<span class="action">冰凍魔法</span>已連續使用兩次，需冷卻 ${player.iceMagicCooldown} 回合！`);
+                showCombatOptions();
+                return;
+            }
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                const level = parseInt(player.magic.find(m => m.startsWith('冰凍魔法'))?.match(/Lv\.(\d+)/)?.[1] || 1);
+                const reduction = 0.7 - (level - 1) * 0.05;
+                enemy.attack = Math.max(0, Math.floor(enemy.attack * reduction));
+                display(`你揮手召喚<span class="action">寒霜</span>，冰冷的氣息籠罩<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>，它的動作變得遲緩，攻擊力降低至 ${enemy.attack}！`, true);
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        player.iceMagicUses++;
+                        if (player.iceMagicUses === 2) player.iceMagicCooldown = 1;
+                        enemyTurn();
+                    }, 500);
+                }, 300);
+            }, 300);
+        }
+
+        function useThunderMagic() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2025/02/thundermagic.mp3'; // 預留音效 URL
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            defending = false;
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                const level = parseInt(player.magic.find(m => m.startsWith('雷電魔法'))?.match(/Lv\.(\d+)/)?.[1] || 1);
+                let damage = Math.max(1, (player.attack + player.tempStats.attack) + 15 + (level - 1) * 5 - enemy.defense);
+                const isHit = Math.random() < 0.5;
+                if (!isHit) {
+                    display(`你釋放<span class="action">雷電魔法</span>，但電流偏離了目標，未能擊中<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>！`, true);
+                    setTimeout(() => {
+                        enemyImage.classList.add('shake-left');
+                        setTimeout(() => {
+                            enemyImage.classList.remove('shake-left');
+                            enemyTurn();
+                        }, 500);
+                    }, 500);
+                    return;
+                }
+                const isCrit = Math.random() < player.critChance;
+                if (isCrit) {
+                    damage = Math.floor(damage * 1.5);
+                    display(`你召喚<span class="action">雷電</span>，一道閃電劈向<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>，爆擊造成 ${damage} 點傷害！`, true);
+                } else {
+                    display(`你釋放<span class="action">雷電魔法</span>，電流擊中<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>，造成 ${damage} 點傷害！`, true);
+                }
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        enemy.hp -= damage;
+                        display(`敵人 HP: ${enemy.hp}`);
+                        updateEnemyHpBar();
+                        if (enemy.hp <= 0) {
+                            winCombat();
+                        } else {
+                            enemyTurn();
+                        }
+                    }, 500);
+                }, 300);
+            }, 300);
+        }
+
+        function usePotion() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2025/02/drink.mp3'; // 預留音效 URL
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            defending = false;
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                player.hp = Math.min(player.maxHp, player.hp + 20);
+                player.items = player.items.filter(item => item !== '治療藥水 (恢復 20 HP)');
+                player.inventory = player.inventory.filter(item => item !== '治療藥水 (恢復 20 HP)');
+                if (player.status.includes('中毒')) {
+                    player.status = player.status.filter(s => s !== '中毒');
+                    delete statusTurns['中毒'];
+                    display('你飲下<span class="highlight">治療藥水</span>，毒素被清除，<span class="status-negative">中毒</span>解除！', true);
+                } else {
+                    display(`你掏出一瓶翠綠的<span class="highlight">藥水</span>，一飲而盡，溫暖的能量流遍全身，恢復 <span class="status-positive">20 HP</span>，當前 HP: ${player.hp}/${player.maxHp}`, true);
+                }
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        updatePlayerHpBar();
+                        updatePlayerPanel();
+                        enemyTurn();
+                    }, 500);
+                }, 300);
+            }, 300);
+        }
+
+        function useBomb() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/05/技能2.mp3'; // 預留音效 URL
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            defending = false;
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                enemy.hp -= 50;
+                player.items = player.items.filter(item => item !== '炸彈 (50 傷害)');
+                player.inventory = player.inventory.filter(item => item !== '炸彈 (50 傷害)');
+                display(`你點燃<span class="highlight">炸彈</span>的引線，朝<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>扔去，一聲巨響，火光四濺，造成 50 點毀滅性傷害！敵人 HP: ${enemy.hp}`, true);
+                setTimeout(() => {
+                    enemyImage.classList.add('shake-left');
+                    setTimeout(() => {
+                        enemyImage.classList.remove('shake-left');
+                        updateEnemyHpBar();
+                        updatePlayerPanel();
+                        if (enemy.hp <= 0) {
+                            winCombat();
+                        } else {
+                            enemyTurn();
+                        }
+                    }, 500);
+                }, 300);
+            }, 300);
+        }
+
+        function attemptEscape() {
+            const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/05/閃躲.mp3'; // 預留音效 URL
+            playSoundWithVolume(soundUrl); // 使用統一音量播放
+            defending = false;
+            playerImage.classList.add('shake-right');
+            setTimeout(() => {
+                playerImage.classList.remove('shake-right');
+                if (Math.random() < 0.6) {
+                    display('你轉身<span class="action">飛奔</span>，腳步如風，終於甩開了敵人，喘息著逃出生天！', true);
+                    setTimeout(() => {
+                        enemyImage.classList.add('shake-left');
+                        setTimeout(() => {
+                            enemyImage.classList.remove('shake-left');
+                            gameState = 'floor';
+                            enemy = null;
+                            updateEnemyHpBar();
+                            afterAction();
+                        }, 1000);
+                    }, 1000);
+                } else {
+                    display(`你試圖<span class="action">逃跑</span>，但腳下一個踉蹌，<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>咆哮著撲了上來，逃跑失敗！`, true);
+                    setTimeout(() => {
+                        enemyImage.classList.add('shake-left');
+                        setTimeout(() => {
+                            enemyImage.classList.remove('shake-left');
+                            enemyTurn();
+                        }, 500);
+                    }, 300);
+                }
+            }, 300);
+        }
+
+        const enemyAttackDescriptions = [
+            (damage) => `<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>發出瘮人的吼聲，撲向你，利爪撕裂你的防禦，造成 ${damage} 點傷害！`
+        ];
+
+        const enemyPierceDescriptions = [
+            (damage) => `<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>發動無視防禦的貫穿攻擊，直擊你的要害，造成 ${damage} 點傷害！`
+        ];
+
+        function enemyTurn() {
+            let damage;
+            const isPierce = Math.random() < 0.25;
+            if (isPierce) {
+                damage = enemy.attack;
+                if (defending) damage = Math.floor(damage * 0.5);
+                display(enemyPierceDescriptions[Math.floor(Math.random() * enemyPierceDescriptions.length)](damage));
+            } else {
+                damage = Math.max(1, enemy.attack - (player.defense + player.tempStats.defense));
+                if (defending) damage = Math.floor(damage * 0.5);
+                if (player.status.includes('祝福')) damage = Math.floor(damage * 0.8);
+                display(enemyAttackDescriptions[Math.floor(Math.random() * enemyAttackDescriptions.length)](damage));
+            }
+
+            if (Math.random() < player.dodgeChance) {
+                display(`你靈敏地閃避，<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>的攻擊落空了！`);
+            } else {
+                player.hp = Math.max(0, player.hp - damage);
+                display(`你的 HP: ${player.hp}/${player.maxHp}`);
+            }
+
+            if (enemy.special === 'poison' && Math.random() < 0.15 && !player.immunities.includes('poison')) {
+                applyStatus('中毒', 2);
+            }
+            if (enemy.special === 'bleed' && Math.random() < 0.15 && !player.status.includes('流血')) {
+                applyStatus('流血', 2);
+                display(`<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>的利爪劃開你的血肉，你開始<span class="status-negative">流血</span>，每回合損失 3 HP！`);
+            }
+            if (enemy.special === 'stun' && Math.random() < 0.1) {
+                applyStatus('暈眩', 1);
+                display(`<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>的巨力讓你頭暈目眩，你進入<span class="status-negative">暈眩</span>狀態，下回合無法行動！`);
+            }
+            if (enemy.special === 'leech') {
+                const leech = Math.floor(damage * 0.5);
+                enemy.hp = Math.min(enemy.maxHp, enemy.hp + leech);
+                display(`<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>的獠牙刺入你的血肉，吸取生命力，恢復 <span class="status-positive">${leech} HP</span>！`);
+                updateEnemyHpBar();
+            }
+            if (enemy.special === 'curse' && Math.random() < 0.15 && !player.status.includes('詛咒')) {
+                applyStatus('詛咒', 2);
+                display(`<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>散發詭異氣息，你感到力量被削弱，進入<span class="status-negative">詛咒</span>狀態！`);
+            }
+            if (enemy.special === 'burn' && Math.random() < 0.15 && !player.immunities.includes('burn')) {
+                applyStatus('燃燒', 2);
+                display(`<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>噴出烈焰，你被<span class="status-negative">燃燒</span>，每回合損失 4 HP！`);
+            }
+            if (enemy.special === 'freeze' && Math.random() < 0.15 && !player.status.includes('凍結')) {
+                applyStatus('凍結', 2);
+                display(`<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>釋放寒氣，你被<span class="status-negative">凍結</span>，防禦降低 2！`);
+            }
+
+            if (player.status.includes('中毒') && !player.immunities.includes('poison')) {
+                player.hp = Math.max(0, player.hp - 5);
+                display('<span class="status-negative">毒液</span>在你體內肆虐，疼痛如針刺，損失 5 HP！');
+            }
+            if (player.status.includes('流血')) {
+                player.hp = Math.max(0, player.hp - 3);
+                display('鮮血從傷口滲出，<span class="status-negative">流血</span>讓你損失 3 HP！');
+            }
+            if (player.status.includes('燃燒') && !player.immunities.includes('burn')) {
+                player.hp = Math.max(0, player.hp - 4);
+                display('<span class="status-negative">火焰</span>灼燒你的身體，損失 4 HP！');
+            }
+            if (player.status.includes('凍結')) {
+                player.defense = Math.max(0, player.defense - 2);
+                display('<span class="status-negative">凍結</span>讓你的動作僵硬，防禦降低 2！');
+            }
+
+            updatePlayerHpBar();
+            updatePlayerPanel();
+            updateStatus();
+
+            if (player.iceMagicCooldown > 0) {
+                player.iceMagicCooldown--;
+                if (player.iceMagicCooldown === 0) {
+                    display('冰凍魔法已冷卻完成！');
+                    player.iceMagicUses = 0;
+                }
+            }
+
+            if (checkGameOver()) return;
+
+            if (player.status.includes('暈眩')) {
+                display('你因<span class="status-negative">暈眩</span>而無法行動！');
+                player.status = player.status.filter(s => s !== '暈眩');
+                delete statusTurns['暈眩'];
+                updatePlayerPanel();
+                enemyTurn();
+            } else {
+                setTimeout(() => {
+                    showCombatOptions();
+                }, 1500); // 調整為 1.5 秒，配合 0.5 秒間隔
+            }
+        }
+
+        function winCombat() {
+            player.exp += enemy.exp;
+            player.gold += enemy.gold;
+            display(`隨著一聲淒厲的哀嚎，<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>倒在血泊中，你擦去額上的汗水，喘著粗氣，勝利屬於你！獲得 ${enemy.exp} 經驗值和 ${enemy.gold} 金幣。`);
+            checkLevelUp();
+            if (enemy.name === '魔王') {
+                bossDefeatedCount++;
+                if (bossDefeatedCount === 1) {
+                    display('魔王發出震天的咆哮，身體散發出黑暗光芒，進入<span class="highlight">二階段覺醒</span>！');
+                    enemy = { name: '魔王', hp: 100, attack: 40, defense: 30, special: 'poison', desc: '魔王覺醒後，周身籠罩著黑暗火焰，力量更加恐怖。', exp: 150, gold: 100, maxHp: 100, image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/demonking.png' };
+                    setEnemyImage(enemy.name);
+                    updateEnemyHpBar();
+                    gameState = 'boss';
+                    playerImage.classList.add('shake-up');
+                    setTimeout(() => {
+                        showCombatOptions();
+                    }, 4000); // 等待動畫完成
+                    return;
+                } else if (bossDefeatedCount === 2) {
+                    winGame();
+                    return;
+                }
+            }
+            player.attack = baseStats.attack;
+            player.defense = baseStats.defense;
+            player.hp = Math.min(player.maxHp, baseStats.hp);
+            player.tempStats = { attack: 0, defense: 0, hp: 0 };
+            offerCombatReward();
+            enemy = null;
+            updateEnemyHpBar();
+            updatePlayerHpBar();
+            updatePlayerPanel();
+            playerImage.classList.add('shake-up');
+            gameState = 'floor';
+        }
+
+        function offerCombatReward() {
+            if (Math.random() < 0.5) {
+                display('在敵人的殘骸中，你發現了一些戰利品！請選擇一項：');
+                clearChoices();
+                const options = [];
+                for (let i = 0; i < 3; i++) {
+                    const reward = rewards[Math.floor(Math.random() * rewards.length)];
+                    options.push(reward);
+                    addChoice(reward.name, () => {
+                        reward.effect();
+                        display(`你拾起<span class="highlight">${reward.name}</span>，一股力量湧入你的身體。`);
+                        updatePlayerPanel();
+                        if (actionsLeft > 0) {
+                            afterAction();
+                        } else if (currentFloor === 9) {
+                            finalBoss();
+                            gameState = 'boss';
+                            showCombatOptions();
+                        } else {
+                            currentFloor++;
+                            actionsLeft = 3;
+                            exploreCount = 0;
+                            showFloorOptions();
+                        }
+                    });
+                }
+            } else {
+                display('這次戰鬥沒有額外的戰利品。');
+                if (actionsLeft > 0) {
+                    afterAction();
+                } else if (currentFloor === 9) {
+                    finalBoss();
+                    gameState = 'boss';
+                    showCombatOptions();
+                } else {
+                    currentFloor++;
+                    actionsLeft = 3;
+                    exploreCount = 0;
+                    showFloorOptions();
+                }
+            }
+        }
+
+        function offerReward() {
+            display('戰鬥的塵埃落定，你在敵人殘骸旁發現閃耀的光芒，那是勝利的獎賞！請選擇一項：');
+            clearChoices();
+            const options = [];
+            for (let i = 0; i < 3; i++) {
+                const reward = rewards[Math.floor(Math.random() * rewards.length)];
+                options.push(reward);
+                addChoice(reward.name, () => {
+                    reward.effect();
+                    display(`你拾起<span class="highlight">${reward.name}</span>，一股力量湧入你的身體。`);
+                    afterAction();
+                });
+            }
+            addChoice('繼續', afterAction);
+        }
+
+        function tradeWithMerchant() {
+            display('一個披著斗篷的<span class="highlight">神秘商人</span>從陰影中走出，他沙啞地笑道：“來看看我的貨吧，勇士！”');
+            clearChoices();
+            addChoice('購買治療藥水 (20 金幣)', () => {
+                const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2025/02/cash.mp3'; // 預留音效 URL
+                playSoundWithVolume(soundUrl); // 使用統一音量播放
+                if (player.gold >= 20) {
+                    if (player.items.filter(item => item === '治療藥水 (恢復 20 HP)').length >= 1) {
+                        display('你已經持有一瓶治療藥水，商人搖頭說：“你不需要更多了。”');
+                    } else {
+                        player.gold -= 20;
+                        player.items.push('治療藥水 (恢復 20 HP)');
+                        player.inventory.push('治療藥水 (恢復 20 HP)');
+                        display('你遞出20枚金幣，換來一瓶散發微光的<span class="highlight">治療藥水</span>。');
+                        updatePlayerPanel();
+                    }
+                    tradeWithMerchant();
+                } else {
+                    display('你的金幣不足，商人搖了搖頭。');
+                    tradeWithMerchant();
+                }
+            });
+            addChoice('購買炸彈 (30 金幣)', () => {
+                const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2025/02/cash.mp3'; // 預留音效 URL
+                playSoundWithVolume(soundUrl); // 使用統一音量播放
+                if (player.gold >= 30) {
+                    if (player.items.filter(item => item === '炸彈 (50 傷害)').length >= 1) {
+                        display('你已經持有一個炸彈，商人搖頭說：“你不需要更多了。”');
+                    } else {
+                        player.gold -= 30;
+                        player.items.push('炸彈 (50 傷害)');
+                        player.inventory.push('炸彈 (50 傷害)');
+                        display('你花費30枚金幣，商人遞給你一個沉甸甸的<span class="highlight">炸彈</span>。');
+                        updatePlayerPanel();
+                    }
+                    tradeWithMerchant();
+                } else {
+                    display('你的金幣不足，商人冷笑一聲。');
+                    tradeWithMerchant();
+                }
+            });
+            addChoice('治癒狀態 (50 金幣)', () => {
+                const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2025/02/cash.mp3'; // 預留音效 URL
+                playSoundWithVolume(soundUrl); // 使用統一音量播放
+                if (player.gold >= 50) {
+                    player.gold -= 50;
+                    player.status = player.status.filter(s => s !== '中毒' && s !== '流血' && s !== '詛咒' && s !== '燃燒' && s !== '凍結');
+                    for (let s in statusTurns) delete statusTurns[s];
+                    display('商人揮手施展魔法，你的異常狀態被清除！');
+                    updatePlayerPanel();
+                    tradeWithMerchant();
+                } else {
+                    display('你的金幣不足，商人聳了聳肩。');
+                    tradeWithMerchant();
+                }
+            });
+            addChoice('離開', () => {
+                const soundUrl = ''; // 預留音效 URL
+                playSoundWithVolume(soundUrl); // 使用統一音量播放
+                afterAction();
+            });
+        }
+
+        function finalBoss() {
+            display('你終於踏入<span class="highlight">魔王城</span>的深淵，一陣陰風吹過，<span class="highlight">魔王</span>從王座起身，他猙獰的面容被火焰映照，身披黑鐵戰甲，手中巨劍散發死亡氣息！');
+            enemy = { name: '魔王', hp: 150, attack: 30, defense: 20, special: 'poison', desc: '魔王屹立於王座之前，猩紅的披風隨風獵獷作響，眼中燃燒著毀滅的火焰。', exp: 100, gold: 50, maxHp: 150, image: 'https://www.independent.com.tw/wp-content/uploads/2025/02/demonking.png' };
+            setEnemyImage(enemy.name);
+            const enemySpan = `<span class="enemy-name" style="color: ${enemyColors[enemy.name]}">${enemy.name}</span>`;
+            display(`${enemySpan}屬性 - HP: ${enemy.hp}, 攻擊: ${enemy.attack}, 防禦: ${enemy.defense}`);
+            gameState = 'boss';
+            updateEnemyHpBar();
+            setTimeout(() => {
+                showCombatOptions();
+            }, 4000);
+        }
+
+        function winGame() {
+            display('隨著<span class="highlight">魔王</span>發出最後一聲咆哮，他倒在王座前，魔王城開始崩塌。你衝出大門，陽光灑在身上，此地已恢復和平，恭喜你成功破關！');
+            gameState = 'end';
+            clearChoices();
+            addChoice('回到標題畫面', () => {
+                const soundUrl = 'https://www.independent.com.tw/wp-content/uploads/2024/10/change-select.mp3'; // 預留音效 URL
+                playSoundWithVolume(soundUrl); // 使用統一音量播放
+                location.reload();
+            });
+        }
+    </script>
+</body>
+</html>
